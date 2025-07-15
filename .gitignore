@@ -1,0 +1,33 @@
+# Node modules
+node_modules/
+
+# Next.js build output
+.next/
+out/
+dist/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+
+# Env files
+.env*
+
+# Editor directories and files
+.cursor/
+*.swp
+*.swo
+
+# Coverage directory
+coverage/
+
+# TypeScript build info
+*.tsbuildinfo
+
+# Vercel
+.vercel/
+
+# Local environment files
+*.local 
