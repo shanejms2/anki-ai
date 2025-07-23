@@ -31,3 +31,8 @@ coverage/
 
 # Local environment files
 *.local 
+venv/
+
+venv/
+
+venv-clean/
