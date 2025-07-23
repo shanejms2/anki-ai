@@ -85,16 +85,12 @@ export const ReviewMode = ({ onReviewComplete, onCancel }: ReviewModeProps) => {
     
     try {
       const card = dueCards[currentIndex];
-      
-      // Add review to card
-      await addReview(card.id, {
-        date: new Date(),
-        rating
-      });
+      // Submit review to backend
+      await apiClient.submitReview(card.id, apiHelpers.ratingToApi(rating));
 
       // Update card's spaced repetition parameters
       const updatedCard = await updateCardScheduling(card, rating);
-      await updateCard(updatedCard);
+      // await updateCard(updatedCard); // Remove this line, backend handles update
 
       // Move to next card or complete review
       if (currentIndex + 1 < dueCards.length) {
