@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 30
     
     # CORS Configuration
+    # Allow both localhost and 127.0.0.1 for frontend dev
     allowed_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
     
     # OAuth Configuration

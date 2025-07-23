@@ -66,7 +66,7 @@ export default function AuthCallback() {
         await refreshUser();
 
         if (response.is_new_user) {
-          toast.success('Welcome to Anki-AI! Your account has been created.');
+          toast.success('Your account has been created.');
         } else {
           toast.success('Welcome back to Anki-AI!');
         }

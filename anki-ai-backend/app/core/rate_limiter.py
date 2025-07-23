@@ -141,7 +141,7 @@ RATE_LIMITS = {
         "create": RateLimitConfig(max_requests=20, window_seconds=300, burst_limit=5),  # 20 per 5min, 5 per min
         "update": RateLimitConfig(max_requests=30, window_seconds=300, burst_limit=10),  # 30 per 5min, 10 per min
         "delete": RateLimitConfig(max_requests=10, window_seconds=300, burst_limit=3),  # 10 per 5min, 3 per min
-        "list": RateLimitConfig(max_requests=100, window_seconds=300, burst_limit=20),  # 100 per 5min, 20 per min
+        "list": RateLimitConfig(max_requests=500, window_seconds=300, burst_limit=100),  # 500 per 5min, 100 per min
         "get": RateLimitConfig(max_requests=200, window_seconds=300, burst_limit=50),  # 200 per 5min, 50 per min
     },
     "reviews": {

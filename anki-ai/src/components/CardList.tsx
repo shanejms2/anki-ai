@@ -5,20 +5,32 @@
 
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react';
 import { Card } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/lib/auth-context';
 import { toast } from 'sonner';
 import { apiClient, apiHelpers } from '@/lib/api';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  Dialog,
+  DialogTrigger,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from '@/components/ui/dialog';
 
 interface CardListProps {
-  onAddCard?: () => void;
-  onEditCard?: (card: Card) => void;
-  onDeleteCard?: (card: Card) => void;
-  onReviewCards?: () => void;
-  onSettings?: () => void;
+  onAddCard: () => void;
+  onEditCard: (card: Card) => void;
+  onDeleteCard: (card: Card) => void;
+  onReviewCards: () => void;
+  onSettings: () => void;
+  loading?: boolean;
 }
 
 export const CardList = ({ 
@@ -26,7 +38,8 @@ export const CardList = ({
   onEditCard, 
   onDeleteCard, 
   onReviewCards,
-  onSettings
+  onSettings,
+  loading: parentLoading = false
 }: CardListProps) => {
   const { logout, user } = useAuth();
   const [cards, setCards] = useState<Card[]>([]);
@@ -36,6 +49,8 @@ export const CardList = ({
   const [deletingCardId, setDeletingCardId] = useState<string | null>(null);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const addCardButtonRef = useRef<HTMLButtonElement>(null);
+  const [selectedCardIds, setSelectedCardIds] = useState<string[]>([]);
+  const [showBulkDeleteDialog, setShowBulkDeleteDialog] = useState(false);
 
   // Load cards from storage
   const loadCards = async () => {
@@ -87,8 +102,10 @@ export const CardList = ({
 
   // Load cards on component mount
   useEffect(() => {
-    loadCards();
-  }, []);
+    if (!parentLoading) {
+      loadCards();
+    }
+  }, [parentLoading]);
 
   // Focus management
   useEffect(() => {
@@ -180,12 +197,40 @@ export const CardList = ({
     }
   }, [focusedCardIndex, cards.length, onDeleteCard]);
 
+  // Multi-select logic
+  const isAllSelected = cards.length > 0 && selectedCardIds.length === cards.length;
+  const isIndeterminate = selectedCardIds.length > 0 && selectedCardIds.length < cards.length;
+
+  const handleSelectCard = (cardId: string) => {
+    setSelectedCardIds((prev) =>
+      prev.includes(cardId) ? prev.filter((id) => id !== cardId) : [...prev, cardId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedCardIds([]);
+    } else {
+      setSelectedCardIds(cards.map((c) => c.id));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setShowBulkDeleteDialog(false);
+    if (selectedCardIds.length === 0) return;
+    try {
+      await Promise.all(selectedCardIds.map((id) => apiClient.deleteCard(id)));
+      toast.success('Selected cards deleted successfully');
+      setSelectedCardIds([]);
+      await loadCards();
+    } catch (error) {
+      console.error('Bulk delete failed:', error);
+      toast.error('Failed to delete selected cards. Please try again.');
+    }
+  };
+
   // Handle logout
   const handleLogout = async () => {
-    if (!window.confirm('Are you sure you want to sign out? You will need to sign in again to access your cards.')) {
-      return;
-    }
-
     setIsLoggingOut(true);
     try {
       await logout();
@@ -200,18 +245,9 @@ export const CardList = ({
     }
   };
 
-  if (loading) {
-    return (
-      <div 
-        className="flex flex-col justify-center items-center p-responsive space-y-4"
-        role="status"
-        aria-live="polite"
-        aria-label="Loading cards"
-      >
-        <div className="text-responsive-lg">Loading cards...</div>
-        <Progress value={0} className="w-64" />
-      </div>
-    );
+  // Only show loading spinner if not suppressed by parent
+  if (parentLoading || loading) {
+    return null;
   }
 
   return (
@@ -242,8 +278,38 @@ export const CardList = ({
             </div>
           )}
         </div>
-        
         <div className="flex flex-col gap-3 sm:flex-row sm:gap-2">
+          {selectedCardIds.length > 0 && (
+            <Dialog open={showBulkDeleteDialog} onOpenChange={setShowBulkDeleteDialog}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowBulkDeleteDialog(true)}
+                  aria-label="Delete selected cards"
+                  size="lg"
+                  className="font-medium"
+                >
+                  Delete Selected ({selectedCardIds.length})
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Delete Selected Cards?</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to delete {selectedCardIds.length} selected card{selectedCardIds.length > 1 ? 's' : ''}? This action cannot be undone.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose asChild>
+                    <Button variant="outline">Cancel</Button>
+                  </DialogClose>
+                  <Button variant="destructive" onClick={handleBulkDelete} autoFocus>
+                    Delete
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          )}
           {onReviewCards && dueCount > 0 && (
             <Button 
               onClick={onReviewCards}
@@ -288,7 +354,6 @@ export const CardList = ({
           </Button>
         </div>
       </div>
-
       {/* Cards list */}
       {cards.length === 0 ? (
         <div className="text-center py-responsive">
@@ -314,6 +379,15 @@ export const CardList = ({
           aria-label="Flashcards"
           tabIndex={0}
         >
+          {/* Select All Checkbox */}
+          <div className="flex items-center gap-2 mb-2">
+            <Checkbox
+              checked={isAllSelected}
+              onCheckedChange={handleSelectAll}
+              aria-label={isAllSelected ? 'Deselect all cards' : 'Select all cards'}
+            />
+            <span className="text-sm text-muted-foreground">Select All</span>
+          </div>
           {(Array.isArray(cards) ? cards : []).map((card, index) => (
             <div
               key={card.id}
@@ -341,7 +415,13 @@ export const CardList = ({
               onFocus={() => setFocusedCardIndex(index)}
               onBlur={() => setFocusedCardIndex(-1)}
             >
-              <div className="flex-1 min-w-0 mb-4 sm:mb-0">
+              <div className="flex items-center gap-3 flex-1 min-w-0 mb-4 sm:mb-0">
+                <Checkbox
+                  checked={selectedCardIds.includes(card.id)}
+                  onCheckedChange={() => handleSelectCard(card.id)}
+                  aria-label={selectedCardIds.includes(card.id) ? `Deselect card: ${card.front}` : `Select card: ${card.front}`}
+                  className="mr-2"
+                />
                 <div className="font-medium truncate text-responsive" id={`card-${card.id}-front`}>
                   {card.front}
                 </div>
@@ -352,7 +432,6 @@ export const CardList = ({
                   )}
                 </div>
               </div>
-              
               <div className="flex gap-2 sm:ml-4">
                 {onEditCard && (
                   <Button
@@ -384,7 +463,6 @@ export const CardList = ({
           ))}
         </div>
       )}
-
       {/* Keyboard shortcuts help */}
       {cards.length > 0 && (
         <div className="bg-muted/50 p-responsive rounded-lg">

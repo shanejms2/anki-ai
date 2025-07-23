@@ -165,10 +165,6 @@ export const Settings = ({ onBack }: SettingsProps) => {
 
   // Handle logout
   const handleLogout = async () => {
-    if (!window.confirm('Are you sure you want to sign out? You will need to sign in again to access your cards.')) {
-      return;
-    }
-
     setIsLoggingOut(true);
     try {
       await logout();

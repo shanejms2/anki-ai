@@ -194,7 +194,7 @@ export default function Home() {
           await refreshUser();
 
           if (response.is_new_user) {
-            toast.success('Welcome to Anki-AI! Your account has been created.');
+            toast.success('Your account has been created.');
           } else {
             toast.success('Welcome back to Anki-AI!');
           }
@@ -248,7 +248,8 @@ export default function Home() {
             // Refresh the auth context to update the user state
             await refreshUser();
             
-            toast.success('Welcome to Anki-AI!');
+            // Remove the 'Welcome to Anki-AI!' toast when handling access token in URL hash
+            // toast.success('Welcome to Anki-AI!');
             
             // Clear the URL hash
             window.history.replaceState({}, '', window.location.pathname);
@@ -266,8 +267,8 @@ export default function Home() {
     handleAccessToken();
   }, [refreshUser]);
 
-  // Show loading state while auth is initializing
-  if (authLoading) {
+  // Show loading state while auth or cards are initializing
+  if (authLoading || cardsLoading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-screen space-y-4">
         <div className="text-lg">Loading Anki-AI...</div>
@@ -378,6 +379,7 @@ export default function Home() {
               onDeleteCard={handleDeleteCard}
               onReviewCards={handleReviewCards}
               onSettings={handleSettings}
+              loading={cardsLoading}
             />
           </div>
           

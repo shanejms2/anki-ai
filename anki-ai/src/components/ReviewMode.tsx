@@ -11,6 +11,13 @@ import { Progress } from '@/components/ui/progress';
 import { Card as CardType, ReviewRating } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
+import { apiClient, apiHelpers } from '@/lib/api';
+
+// Helper to fetch due cards from backend and map to CardType
+const fetchDueCards = async () => {
+  const apiCards = await apiClient.getDueCards({ page_size: 100 });
+  return apiCards.map(apiHelpers.apiCardToCard);
+};
 
 interface ReviewModeProps {
   onReviewComplete?: () => void;

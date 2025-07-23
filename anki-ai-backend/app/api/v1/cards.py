@@ -460,3 +460,44 @@ async def get_card_with_reviews(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to retrieve card with reviews"
         ) 
+
+
+class BulkDeleteRequest(BaseModel):
+    card_ids: list[UUID]
+
+class BulkDeleteResponse(BaseModel):
+    deleted: int
+    failed: int
+    errors: list[str] = []
+
+@router.post("/bulk-delete", response_model=BulkDeleteResponse)
+async def bulk_delete_cards(
+    req: BulkDeleteRequest,
+    current_user: Card = Depends(get_current_user)
+):
+    logger.info(f"Bulk delete requested for {len(req.card_ids)} cards by user {current_user.id}")
+    supabase = get_supabase()
+    deleted = 0
+    failed = 0
+    errors = []
+    for card_id in req.card_ids:
+        try:
+            # Only delete cards belonging to the current user
+            result = await run_in_threadpool(
+                lambda: supabase.table("cards")
+                    .delete()
+                    .eq("id", str(card_id))
+                    .eq("user_id", str(current_user.id))
+                    .execute()
+            )
+            if result.data and (isinstance(result.data, list) and len(result.data) > 0):
+                deleted += 1
+            else:
+                failed += 1
+                errors.append(f"Card {card_id} not found or not owned by user.")
+        except Exception as e:
+            logger.error(f"Failed to delete card {card_id}: {e}")
+            failed += 1
+            errors.append(f"Card {card_id}: {str(e)}")
+    logger.info(f"Bulk delete complete: {deleted} deleted, {failed} failed.")
+    return BulkDeleteResponse(deleted=deleted, failed=failed, errors=errors) 
