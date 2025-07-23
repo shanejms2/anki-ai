@@ -1,36 +1,153 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Anki-AI
+
+A modern, AI-ready spaced repetition flashcard application built with Next.js, TypeScript, and TailwindCSS.
+
+## Features
+
+- **Spaced Repetition**: Implements the SM-2 algorithm for optimal learning intervals
+- **Card Management**: Create, edit, and delete flashcards with ease
+- **Review System**: Intelligent review scheduling based on your performance
+- **Data Persistence**: Local storage with IndexedDB and localStorage fallback
+- **Backup & Restore**: Import/export your cards as JSON files
+- **Modern UI**: Beautiful, accessible interface built with Shadcn UI
+- **Keyboard Navigation**: Full keyboard accessibility support
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js 18+ 
+- npm, yarn, pnpm, or bun
+
+### Installation
+
+1. Clone the repository:
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd anki-ai
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. Install dependencies:
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. Start the development server:
+```bash
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+4. Open [http://localhost:3000](http://localhost:3000) in your browser
 
-## Learn More
+## Usage
 
-To learn more about Next.js, take a look at the following resources:
+### Adding Cards
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. Click the "Add Card" button
+2. Fill in the front (question) and back (answer) fields
+3. Click "Save Card" to add it to your collection
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Reviewing Cards
 
-## Deploy on Vercel
+1. Click "Review Due Cards" to start a review session
+2. Read the question on the front of the card
+3. Click "Show Answer" to reveal the answer
+4. Rate your performance:
+   - **Easy**: Card will be scheduled further in the future
+   - **Hard**: Card will be reviewed sooner
+   - **Forgot**: Card will be reviewed again soon
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Managing Cards
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Edit**: Click the edit icon on any card to modify it
+- **Delete**: Click the delete icon to remove a card (with confirmation)
+- **View All**: Browse all your cards in the main list
+
+### Backup & Restore
+
+- **Export**: Click "Export Cards" to download your data as a JSON file
+- **Import**: Click "Import Cards" to restore from a previously exported file
+
+## Technical Details
+
+### Architecture
+
+- **Frontend**: Next.js 14 with App Router
+- **Styling**: TailwindCSS with Shadcn UI components
+- **Database**: Dexie.js (IndexedDB) with localStorage fallback
+- **Testing**: Jest with comprehensive test coverage
+- **Type Safety**: Full TypeScript implementation
+
+### Data Model
+
+```typescript
+interface Card {
+  id: string;
+  front: string;
+  back: string;
+  interval: number;
+  ease: number;
+  nextReview: Date;
+  reviewHistory: Review[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+interface Review {
+  id: string;
+  cardId: string;
+  rating: 'easy' | 'hard' | 'forgot';
+  reviewedAt: Date;
+}
+```
+
+### Spaced Repetition Algorithm
+
+The app implements a simplified SM-2 algorithm:
+
+- **Easy**: Increases interval and ease factor
+- **Hard**: Decreases interval, maintains ease factor
+- **Forgot**: Resets interval to 1 day, decreases ease factor
+
+## Development
+
+### Running Tests
+
+```bash
+npm test
+```
+
+### Building for Production
+
+```bash
+npm run build
+npm start
+```
+
+### Code Quality
+
+- ESLint for code linting
+- Prettier for code formatting
+- TypeScript for type safety
+- Jest for unit testing
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests for new functionality
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Roadmap
+
+- [ ] Decks and tags for organization
+- [ ] Image and audio support
+- [ ] Statistics and learning analytics
+- [ ] AI-powered card suggestions
+- [ ] Cloud synchronization
+- [ ] Mobile app
